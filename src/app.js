@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { env } from './config/env.js';
+import { stripeWebhook } from './controllers/webhook.controller.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { createRateLimiter, resolveRateLimits } from './middleware/rateLimit.js';
@@ -41,7 +42,13 @@ export function createApp({ rateLimits } = {}) {
   app.use(helmet());
   app.use(cors({ origin: corsOrigin, credentials: true }));
 
-  // The Stripe webhook route (raw body for signature checks) is mounted here, before the JSON parser.
+  // Stripe signs the exact raw bytes, so the webhook gets a raw body and is mounted before the
+  // JSON parser. It also sits outside the API rate limiter (Stripe retries are legitimate).
+  app.post(
+    '/api/v1/webhooks/stripe',
+    express.raw({ type: 'application/json', limit: '1mb' }),
+    stripeWebhook,
+  );
 
   app.use(express.json({ limit: BODY_LIMIT }));
   app.use(express.urlencoded({ extended: false, limit: BODY_LIMIT }));

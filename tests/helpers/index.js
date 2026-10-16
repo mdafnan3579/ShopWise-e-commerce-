@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { createApp } from '../../src/app.js';
+import { getStripe } from '../../src/config/stripe.js';
 import { DEFAULT_RATE_LIMITS } from '../../src/middleware/rateLimit.js';
 import { Product } from '../../src/models/Product.js';
 import { User } from '../../src/models/User.js';
@@ -57,6 +58,41 @@ export async function loginAs(app, overrides = {}) {
 export function getCookie(res, name) {
   const header = (res.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${name}=`));
   return header ? decodeURIComponent(header.split(';')[0].slice(name.length + 1)) : undefined;
+}
+
+/**
+ * Posts a Stripe event to the webhook with a valid signature, generated with the same secret the
+ * app verifies against (exactly how the Stripe CLI signs test events).
+ */
+export function postSignedWebhook(app, event, { secret = process.env.STRIPE_WEBHOOK_SECRET } = {}) {
+  const payload = JSON.stringify(event);
+  const signature = getStripe().webhooks.generateTestHeaderString({ payload, secret });
+  return request(app)
+    .post('/api/v1/webhooks/stripe')
+    .set('Content-Type', 'application/json')
+    .set('Stripe-Signature', signature)
+    .send(payload);
+}
+
+/** Minimal `checkout.session.*` event, shaped like Stripe's payload. */
+export function checkoutEvent(type, order, overrides = {}) {
+  return {
+    id: `evt_${randomUUID().replace(/-/g, '')}`,
+    object: 'event',
+    type,
+    data: {
+      object: {
+        id: order.stripeSessionId ?? 'cs_test_unknown',
+        object: 'checkout.session',
+        client_reference_id: String(order._id),
+        metadata: { orderId: String(order._id) },
+        payment_status: 'paid',
+        amount_total: order.totalCents,
+        payment_intent: 'pi_test_123',
+        ...overrides,
+      },
+    },
+  };
 }
 
 export function getCookieHeader(res, name) {

@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { createAdminRouter } from './admin.routes.js';
 import { createAuthRouter } from './auth.routes.js';
+import {
+  createCartRouter,
+  createCheckoutRouter,
+  createCouponRouter,
+  createOrderRouter,
+} from './commerce.routes.js';
 import { healthRouter } from './health.routes.js';
 import { createProductRouter } from './product.routes.js';
 import { createReviewRouter } from './review.routes.js';
@@ -18,6 +24,10 @@ export function createApiRouter(limits) {
   router.use('/users', createUserRouter());
   router.use('/products', createProductRouter(limits));
   router.use('/reviews', createReviewRouter());
+  router.use('/cart', createCartRouter());
+  router.use('/coupons', createCouponRouter());
+  router.use('/checkout', createCheckoutRouter(limits));
+  router.use('/orders', createOrderRouter());
   router.use('/admin', createAdminRouter());
 
   return router;

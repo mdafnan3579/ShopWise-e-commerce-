@@ -2,6 +2,7 @@ import { Product } from '../models/Product.js';
 import { Review } from '../models/Review.js';
 import { AppError } from '../utils/AppError.js';
 import { paginate, toMongoSort } from '../utils/pagination.js';
+import { hasPaidOrderFor } from './order.service.js';
 
 const REVIEWER_FIELDS = { path: 'user', select: 'name' };
 
@@ -26,11 +27,6 @@ export async function listReviews(productId, { page, limit, sort, rating }) {
   });
 }
 
-/** Verified-purchase badge: does the user have a paid order containing this product? */
-async function hasPurchased(_userId, _productId) {
-  return false;
-}
-
 export async function createReview(userId, productId, { rating, title, comment }) {
   await ensureActiveProduct(productId);
 
@@ -42,7 +38,7 @@ export async function createReview(userId, productId, { rating, title, comment }
       rating,
       title,
       comment,
-      verifiedPurchase: await hasPurchased(userId, productId),
+      verifiedPurchase: await hasPaidOrderFor(userId, productId),
     });
   } catch (err) {
     // The unique index catches double submissions, even concurrent ones.

@@ -10,6 +10,10 @@ import mongoose from 'mongoose';
 import { connectDB, disconnectDB } from '../config/db.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { Cart } from '../models/Cart.js';
+import { Coupon } from '../models/Coupon.js';
+import { Order } from '../models/Order.js';
+import { ProcessedWebhookEvent } from '../models/ProcessedWebhookEvent.js';
 import { Product } from '../models/Product.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { Review } from '../models/Review.js';
@@ -45,8 +49,51 @@ function sampleRating(quality, random) {
   return Math.min(5, Math.max(1, Math.round(quality + noise)));
 }
 
-/** Collections the seed owns. Later phases add their models here. */
-export const SEEDED_MODELS = [User, Product, Review, RefreshToken];
+/** Collections the seed owns (wiped on every run). */
+export const SEEDED_MODELS = [
+  User,
+  Product,
+  Review,
+  RefreshToken,
+  Order,
+  Coupon,
+  Cart,
+  ProcessedWebhookEvent,
+];
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const SEED_COUPONS = [
+  {
+    code: 'WELCOME10',
+    description: '10% off your order (max $50)',
+    discountType: 'percent',
+    value: 10,
+    maxDiscountCents: 5000,
+  },
+  {
+    code: 'SAVE20',
+    description: '$20 off orders over $100',
+    discountType: 'fixed',
+    value: 2000,
+    minSubtotalCents: 10000,
+  },
+  {
+    code: 'FLASH25',
+    description: '25% off, first 100 orders',
+    discountType: 'percent',
+    value: 25,
+    usageLimit: 100,
+    expiresAt: new Date(Date.now() + 30 * DAY_MS),
+  },
+  {
+    code: 'SUMMER15',
+    description: 'Expired summer promotion',
+    discountType: 'percent',
+    value: 15,
+    expiresAt: new Date(Date.now() - 30 * DAY_MS),
+  },
+];
 
 export async function seedDatabase() {
   const random = createRandom(42);
@@ -117,11 +164,14 @@ export async function seedDatabase() {
   customer.wishlist = products.slice(0, 4).map((p) => p._id);
   await customer.save();
 
+  await Coupon.insertMany(SEED_COUPONS);
+
   return {
     users: 2 + reviewers.length,
     products: products.length,
     categories: new Set(products.map((p) => p.category)).size,
     reviews: reviews.length,
+    coupons: SEED_COUPONS.length,
     admin: admin.email,
   };
 }
