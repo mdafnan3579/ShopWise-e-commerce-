@@ -1,0 +1,27 @@
+# Local development infrastructure.
+# MongoDB runs as a single-node replica set because multi-document transactions
+# (used by the Stripe webhook) are only available on replica sets.
+services:
+  mongo:
+    image: mongo:8
+    container_name: shopwise-mongo
+    command: ['--replSet', 'rs0', '--bind_ip_all', '--port', '27017']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Initiates the replica set on first boot, then simply reports its status.
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  mongo-data:
