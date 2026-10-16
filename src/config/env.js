@@ -39,7 +39,23 @@ const envSchema = z.object({
   // `none` is required when the frontend and API are on different sites (e.g. vercel.app + onrender.com)
   COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
   BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
+
+  // --- Cloudinary (product images) ---
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 });
+
+/**
+ * Integrations that may be left unset in development/test (the feature returns a clear
+ * "not configured" error instead), but must be configured in production.
+ * The Anthropic key is deliberately NOT here: AI features degrade gracefully without it.
+ */
+const REQUIRED_IN_PRODUCTION = [
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+];
 
 /**
  * Validates environment variables and returns a frozen, typed config object.
@@ -53,7 +69,16 @@ export function loadEnv(source) {
     Object.entries(source).filter(([, value]) => value !== undefined && value !== ''),
   );
 
-  const result = envSchema.safeParse(cleaned);
+  const result = envSchema
+    .superRefine((value, ctx) => {
+      if (value.NODE_ENV !== 'production') return;
+      for (const key of REQUIRED_IN_PRODUCTION) {
+        if (!value[key])
+          ctx.addIssue({ code: 'custom', path: [key], message: 'required in production' });
+      }
+    })
+    .safeParse(cleaned);
+
   if (!result.success) {
     const problems = result.error.issues
       .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)

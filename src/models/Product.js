@@ -30,6 +30,9 @@ const productSchema = new Schema(
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     reviewCount: { type: Number, default: 0, min: 0 },
     isActive: { type: Boolean, default: true },
+    // Bumped whenever a review is created, edited or deleted, so the cached AI summary knows
+    // when it is stale.
+    reviewsUpdatedAt: { type: Date },
     aiReviewSummary: {
       type: new Schema(
         {

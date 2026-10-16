@@ -45,6 +45,14 @@ export function normalizeError(err) {
     return new AppError('Request body is too large', 413, 'PAYLOAD_TOO_LARGE');
   }
 
+  // multer (multipart uploads)
+  if (err?.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return new AppError('Image is too large (max 5 MB)', 413, 'FILE_TOO_LARGE');
+    }
+    return new AppError(err.message, 400, 'UPLOAD_ERROR');
+  }
+
   // Other http-errors style client errors (e.g. from third-party middleware)
   if (err?.expose && err.status >= 400 && err.status < 500) {
     return new AppError(err.message, err.status, 'BAD_REQUEST');

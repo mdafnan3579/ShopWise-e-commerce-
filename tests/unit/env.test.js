@@ -49,7 +49,13 @@ describe('loadEnv', () => {
     );
     expect(loadEnv({ ...valid, COOKIE_SAMESITE: 'none' }).COOKIE_SECURE).toBe(true);
     expect(loadEnv(valid).COOKIE_SECURE).toBe(false);
-    expect(loadEnv({ ...valid, NODE_ENV: 'production' }).COOKIE_SECURE).toBe(true);
+  });
+
+  it('requires integration credentials in production only', () => {
+    expect(() => loadEnv({ ...valid, NODE_ENV: 'production' })).toThrowError(
+      /CLOUDINARY_CLOUD_NAME: required in production/,
+    );
+    expect(loadEnv(valid).CLOUDINARY_CLOUD_NAME).toBeUndefined();
   });
 
   it('rejects non-mongodb connection strings', () => {

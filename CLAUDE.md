@@ -18,6 +18,9 @@ Zod + the Anthropic SDK. The React frontend is a separate repo and talks to this
 
 Tests use `mongodb-memory-server` (in-memory replica set) — no Docker or real services needed.
 
+`npm run seed` wipes and reseeds the dev DB (deterministic). Demo logins:
+admin `admin@shopwise.dev` / `Admin@12345`, customer `demo@shopwise.dev` / `Demo@12345`.
+
 ## Non-negotiable conventions
 
 - **JavaScript only**, no TypeScript. JSDoc where types help.
