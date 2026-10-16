@@ -22,6 +22,7 @@ import { Review } from '../models/Review.js';
 import { User } from '../models/User.js';
 import { SEED_PRODUCTS, placeholderImage } from './seed-data/products.js';
 import { REVIEWER_NAMES, REVIEW_TEMPLATES } from './seed-data/reviews.js';
+import { calculateShipping, calculateTax } from '../services/pricing.service.js';
 import { slugify } from '../utils/slugify.js';
 
 export const DEMO_ACCOUNTS = {
@@ -170,14 +171,118 @@ export async function seedDatabase() {
 
   await Coupon.insertMany(SEED_COUPONS);
 
+  const orders = await seedOrderHistory({ customers: [customer, ...reviewers], products, random });
+
   return {
     users: 2 + reviewers.length,
     products: products.length,
     categories: new Set(products.map((p) => p.category)).size,
     reviews: reviews.length,
     coupons: SEED_COUPONS.length,
+    orders,
     admin: admin.email,
   };
+}
+
+const ORDER_HISTORY_DAYS = 90;
+
+/**
+ * 90 days of past orders so the admin dashboard has real-looking revenue, top products and
+ * signup curves. Customer signup dates are spread over the same window. Seeded orders are
+ * historical, so stock levels are left as they are.
+ */
+async function seedOrderHistory({ customers, products, random }) {
+  // Spread signups across the window so "new customers" has a curve.
+  await Promise.all(
+    customers.map((customer) =>
+      User.collection.updateOne(
+        { _id: customer._id },
+        {
+          $set: {
+            createdAt: new Date(
+              Date.now() -
+                (ORDER_HISTORY_DAYS + 5 - Math.floor(random() * ORDER_HISTORY_DAYS)) * DAY_MS,
+            ),
+          },
+        },
+      ),
+    ),
+  );
+
+  const pick = (list) => list[Math.floor(random() * list.length)];
+  const address = {
+    fullName: 'Demo Customer',
+    line1: '221B Baker Street',
+    city: 'London',
+    postalCode: 'NW1 6XE',
+    country: 'GB',
+  };
+
+  const orders = [];
+  for (let daysAgo = ORDER_HISTORY_DAYS; daysAgo >= 0; daysAgo -= 1) {
+    // Gentle growth trend: more orders per day as the window approaches today.
+    const ordersToday = Math.floor(random() * 2 + (ORDER_HISTORY_DAYS - daysAgo) / 45);
+    for (let n = 0; n < ordersToday; n += 1) {
+      const createdAt = new Date(Date.now() - daysAgo * DAY_MS - Math.floor(random() * DAY_MS));
+      const lines = [
+        ...new Set(Array.from({ length: 1 + Math.floor(random() * 3) }, () => pick(products))),
+      ];
+      const items = lines.map((product) => {
+        const quantity = 1 + Math.floor(random() * 2);
+        return {
+          product: product._id,
+          name: product.name,
+          slug: product.slug,
+          image: product.images[0]?.url,
+          priceCents: product.priceCents,
+          quantity,
+          lineTotalCents: product.priceCents * quantity,
+        };
+      });
+      const subtotalCents = items.reduce((sum, i) => sum + i.lineTotalCents, 0);
+      const shippingCents = calculateShipping(subtotalCents);
+      const taxCents = calculateTax(subtotalCents);
+
+      const age = daysAgo;
+      const roll = random();
+      let orderStatus;
+      if (roll < 0.05) orderStatus = 'cancelled';
+      else if (age > 7) orderStatus = 'delivered';
+      else if (age > 2) orderStatus = 'shipped';
+      else orderStatus = 'paid';
+      const paid = orderStatus !== 'cancelled';
+
+      orders.push({
+        user: pick(customers)._id,
+        items,
+        shippingAddress: address,
+        subtotalCents,
+        discountCents: 0,
+        taxCents,
+        shippingCents,
+        totalCents: subtotalCents + taxCents + shippingCents,
+        paymentStatus: paid ? 'paid' : 'unpaid',
+        orderStatus,
+        statusHistory: [
+          { status: 'pending', at: createdAt },
+          ...(paid ? [{ status: 'paid', at: createdAt }] : []),
+        ],
+        stripeSessionId: `cs_test_seed${orders.length}${Math.floor(random() * 1e9)}`,
+        paidAt: paid ? createdAt : undefined,
+        shippedAt: ['shipped', 'delivered'].includes(orderStatus)
+          ? new Date(createdAt.getTime() + DAY_MS)
+          : undefined,
+        deliveredAt:
+          orderStatus === 'delivered' ? new Date(createdAt.getTime() + 4 * DAY_MS) : undefined,
+        cancelledAt: paid ? undefined : createdAt,
+        createdAt,
+        updatedAt: createdAt,
+      });
+    }
+  }
+
+  await Order.insertMany(orders, { timestamps: false });
+  return orders.length;
 }
 
 async function main() {

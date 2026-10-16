@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import * as analytics from '../controllers/analytics.controller.js';
 import * as commerce from '../controllers/commerce.controller.js';
 import * as orders from '../controllers/order.controller.js';
 import * as products from '../controllers/product.controller.js';
@@ -14,6 +15,7 @@ import {
   updateCouponSchema,
   updateOrderStatusSchema,
 } from '../validators/commerce.validators.js';
+import { statsSchema } from '../validators/analytics.validators.js';
 import { adminListProductsSchema } from '../validators/product.validators.js';
 import { listUsersSchema, updateRoleSchema } from '../validators/user.validators.js';
 
@@ -21,6 +23,8 @@ import { listUsersSchema, updateRoleSchema } from '../validators/user.validators
 export function createAdminRouter() {
   const router = Router();
   router.use(requireAuth, requireRole('admin'));
+
+  router.get('/stats', validate(statsSchema), analytics.getStats);
 
   router.get('/users', validate(listUsersSchema), users.listUsers);
   router.patch('/users/:id/role', validate(updateRoleSchema), users.updateUserRole);
