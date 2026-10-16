@@ -1,4 +1,8 @@
 # Local development infrastructure.
+#
+#   docker compose up -d mongo     # just the database (run the API with `npm run dev`)
+#   docker compose --profile app up --build   # database + API container
+#
 # MongoDB runs as a single-node replica set because multi-document transactions
 # (used by the Stripe webhook) are only available on replica sets.
 services:
@@ -22,6 +26,20 @@ services:
       timeout: 10s
       retries: 10
       start_period: 10s
+
+  api:
+    profiles: ['app']
+    build: .
+    container_name: shopwise-api
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://mongo:27017/shopwise?directConnection=true
+    ports:
+      - '5000:5000'
+    depends_on:
+      mongo:
+        condition: service_healthy
 
 volumes:
   mongo-data:

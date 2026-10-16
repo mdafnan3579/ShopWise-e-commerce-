@@ -30,9 +30,13 @@ export function createCartRouter() {
   return router;
 }
 
-export function createCouponRouter() {
+export function createCouponRouter(limits) {
   const router = Router();
-  router.post('/validate', validate(validateCouponSchema), commerce.validateCoupon);
+  const couponLimiter = createRateLimiter({
+    ...limits.coupon,
+    message: 'Too many coupon attempts, please try again later.',
+  });
+  router.post('/validate', couponLimiter, validate(validateCouponSchema), commerce.validateCoupon);
   return router;
 }
 

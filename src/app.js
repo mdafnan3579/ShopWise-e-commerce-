@@ -2,8 +2,10 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { stripeWebhook } from './controllers/webhook.controller.js';
+import { openApiSpec } from './docs/openapi.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { createRateLimiter, resolveRateLimits } from './middleware/rateLimit.js';
@@ -50,12 +52,25 @@ export function createApp({ rateLimits } = {}) {
     stripeWebhook,
   );
 
+  // JSON only. No urlencoded parser: HTML forms (the classic CSRF vehicle) can't produce a
+  // parsed body, so a cross-site form post can never reach a handler with data.
   app.use(express.json({ limit: BODY_LIMIT }));
-  app.use(express.urlencoded({ extended: false, limit: BODY_LIMIT }));
   app.use(cookieParser());
   app.use(rejectMongoOperators);
 
   app.use('/health', healthRouter);
+
+  // Interactive API docs (OpenAPI 3.1). `withCredentials` lets "Try it out" use the auth cookies.
+  app.get('/api/docs.json', (_req, res) => res.json(openApiSpec));
+  app.use(
+    '/api/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, {
+      customSiteTitle: 'ShopWise API Docs',
+      swaggerOptions: { withCredentials: true, persistAuthorization: true },
+    }),
+  );
+
   app.use('/api/v1', createRateLimiter(limits.api), verifyOrigin, createApiRouter(limits));
 
   app.use(notFound);

@@ -162,6 +162,19 @@ describe('coupons', () => {
     expect(bad.body.error.code).toBe('INVALID_COUPON');
   });
 
+  it('rate limits coupon guessing', async () => {
+    const limited = createTestApp({ coupon: 2 });
+    const product = await createProduct();
+    const attempt = (code) =>
+      request(limited)
+        .post('/api/v1/coupons/validate')
+        .send({ code, items: [{ productId: String(product._id), quantity: 1 }] });
+
+    expect((await attempt('GUESS1')).status).toBe(400);
+    expect((await attempt('GUESS2')).status).toBe(400);
+    expect((await attempt('GUESS3')).status).toBe(429);
+  });
+
   it('lets admins manage coupons', async () => {
     const { agent } = await loginAs(app, { role: 'admin' });
 

@@ -26,7 +26,7 @@ export function createApiRouter(limits) {
   router.use('/products', createProductRouter(limits));
   router.use('/reviews', createReviewRouter());
   router.use('/cart', createCartRouter());
-  router.use('/coupons', createCouponRouter());
+  router.use('/coupons', createCouponRouter(limits));
   router.use('/checkout', createCheckoutRouter(limits));
   router.use('/orders', createOrderRouter());
   router.use('/ai', createAIRouter(limits));

@@ -35,6 +35,15 @@ describe('app-level behavior', () => {
     expect(res.body.error.code).toBe('PAYLOAD_TOO_LARGE');
   });
 
+  it('ignores form-encoded bodies (JSON-only API, blunts CSRF via HTML forms)', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .type('form')
+      .send('email=a@b.co&password=Password123');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+
   it('rejects Mongo operator keys in the body', async () => {
     const res = await request(app)
       .post('/api/v1/anything')

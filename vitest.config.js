@@ -25,7 +25,9 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.js'],
-      exclude: ['src/server.js', 'src/scripts/**'],
+      exclude: ['src/server.js', 'src/scripts/**', 'src/docs/paths/**'],
+      // CI fails if coverage drops below these (current: ~90% statements, ~77% branches).
+      thresholds: { statements: 85, branches: 70, functions: 85, lines: 85 },
     },
   },
 });

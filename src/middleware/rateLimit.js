@@ -12,6 +12,7 @@ export const DEFAULT_RATE_LIMITS = Object.freeze({
   refresh: { windowMs: 15 * MINUTE, limit: 60 },
   review: { windowMs: 60 * MINUTE, limit: 20 },
   checkout: { windowMs: 15 * MINUTE, limit: 20 },
+  coupon: { windowMs: 15 * MINUTE, limit: 20 }, // stops brute-forcing coupon codes
   aiChat: { windowMs: MINUTE, limit: 10 },
   aiSearch: { windowMs: MINUTE, limit: 20 },
   aiSummary: { windowMs: MINUTE, limit: 30 },
