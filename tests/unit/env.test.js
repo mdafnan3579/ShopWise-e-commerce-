@@ -4,6 +4,7 @@ import { loadEnv } from '../../src/config/env.js';
 const valid = {
   MONGODB_URI: 'mongodb://localhost:27017/shopwise',
   CLIENT_URL: 'http://localhost:5173',
+  JWT_ACCESS_SECRET: 'a'.repeat(32),
 };
 
 describe('loadEnv', () => {
@@ -40,6 +41,15 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ CLIENT_URL: 'not-a-url', PORT: 'abc' })).toThrowError(
       /MONGODB_URI[\s\S]*CLIENT_URL|CLIENT_URL[\s\S]*MONGODB_URI/,
     );
+  });
+
+  it('requires a strong JWT secret and forces Secure cookies for SameSite=None', () => {
+    expect(() => loadEnv({ ...valid, JWT_ACCESS_SECRET: 'short' })).toThrowError(
+      /JWT_ACCESS_SECRET/,
+    );
+    expect(loadEnv({ ...valid, COOKIE_SAMESITE: 'none' }).COOKIE_SECURE).toBe(true);
+    expect(loadEnv(valid).COOKIE_SECURE).toBe(false);
+    expect(loadEnv({ ...valid, NODE_ENV: 'production' }).COOKIE_SECURE).toBe(true);
   });
 
   it('rejects non-mongodb connection strings', () => {

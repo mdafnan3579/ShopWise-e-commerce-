@@ -31,6 +31,14 @@ const envSchema = z.object({
   MONGODB_URI: z
     .string()
     .regex(/^mongodb(\+srv)?:\/\//, 'must be a mongodb:// or mongodb+srv:// connection string'),
+
+  // --- Auth ---
+  JWT_ACCESS_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  JWT_ACCESS_TTL_MINUTES: z.coerce.number().int().min(1).max(60).default(15),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(7),
+  // `none` is required when the frontend and API are on different sites (e.g. vercel.app + onrender.com)
+  COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
+  BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(12),
 });
 
 /**
@@ -57,6 +65,8 @@ export function loadEnv(source) {
   return Object.freeze({
     ...data,
     LOG_LEVEL: data.LOG_LEVEL ?? DEFAULT_LOG_LEVEL[data.NODE_ENV],
+    // Browsers reject SameSite=None cookies that are not Secure.
+    COOKIE_SECURE: data.NODE_ENV === 'production' || data.COOKIE_SAMESITE === 'none',
     isProduction: data.NODE_ENV === 'production',
     isDevelopment: data.NODE_ENV === 'development',
     isTest: data.NODE_ENV === 'test',

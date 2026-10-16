@@ -5,9 +5,10 @@ import helmet from 'helmet';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
-import { createApiLimiter } from './middleware/rateLimit.js';
+import { createRateLimiter, resolveRateLimits } from './middleware/rateLimit.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { rejectMongoOperators } from './middleware/sanitize.js';
+import { verifyOrigin } from './middleware/verifyOrigin.js';
 import { healthRouter } from './routes/health.routes.js';
 import { createApiRouter } from './routes/index.js';
 
@@ -23,9 +24,12 @@ function corsOrigin(origin, callback) {
 
 /**
  * Builds the Express app without binding a port, so tests can drive it with Supertest.
+ *
+ * @param {{ rateLimits?: Record<string, number> }} [options] per-limiter `limit` overrides
  */
-export function createApp() {
+export function createApp({ rateLimits } = {}) {
   const app = express();
+  const limits = resolveRateLimits(rateLimits);
 
   // Behind Render/Heroku-style proxies this makes req.ip (rate limiting) and req.secure correct.
   app.set('trust proxy', env.TRUST_PROXY);
@@ -45,7 +49,7 @@ export function createApp() {
   app.use(rejectMongoOperators);
 
   app.use('/health', healthRouter);
-  app.use('/api/v1', createApiLimiter(), createApiRouter());
+  app.use('/api/v1', createRateLimiter(limits.api), verifyOrigin, createApiRouter(limits));
 
   app.use(notFound);
   app.use(errorHandler);

@@ -88,6 +88,20 @@ there is **no `asyncHandler` wrapper** — just write `async (req, res) => {}` a
 - Log token usage per call (`feature`, `model`, tokens, latency) via the logger.
 - Tests mock the Anthropic client — the test suite never calls the real API.
 
+## Auth model
+
+- Access token: 15-min HS256 JWT (`sub`, `role`) in the httpOnly `sw_access` cookie (Bearer header
+  also accepted). Verified statelessly by `requireAuth`; `requireRole('admin')` after it.
+- Refresh token: opaque random string in httpOnly `sw_refresh` (path `/api/v1/auth`), stored only
+  as a SHA-256 hash in `RefreshToken`. Rotated on every refresh; reuse of a revoked token revokes
+  the whole family. Password/role changes revoke all of a user's tokens.
+- CSRF: `verifyOrigin` rejects non-GET requests from unknown `Origin`s.
+
+## Testing
+
+- Use `createTestApp()` (generous rate limits) and `loginAs(app, { role })` from
+  `tests/helpers/index.js`. Collections are wiped after every test; each file has its own DB.
+
 ## Style
 
 - ESLint (flat config) + Prettier (single quotes, semicolons, 100 cols). Run lint + tests before
