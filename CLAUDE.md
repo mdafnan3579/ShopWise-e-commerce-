@@ -89,7 +89,16 @@ there is **no `asyncHandler` wrapper** — just write `async (req, res) => {}` a
 - Validate all model output with Zod before using it. Treat user content (reviews, chat) as
   untrusted data inside prompts.
 - Log token usage per call (`feature`, `model`, tokens, latency) via the logger.
-- Tests mock the Anthropic client — the test suite never calls the real API.
+- Tests mock the Anthropic client — the test suite never calls the real API. `tests/setup.js`
+  replaces `@anthropic-ai/sdk` globally with `tests/helpers/fakeAnthropic.js`; script responses
+  with `fakeAnthropic.enqueue(textResponse(...), toolUseResponse([...]), new Error(...))`.
+  An unscripted call throws.
+- Layout: `ai/client.js` (only file that touches the SDK: `createMessage`, `createStructured`,
+  `streamMessage`, `AIUnavailableError`), `ai/prompts/*` (template functions), `ai/schemas.js`
+  (Zod for model output), `ai/tools/catalogTools.js` (assistant tools → services),
+  `ai/services/*` (one per feature, each with its fallback).
+- The chat assistant may only show product ids that a data tool returned in the same turn
+  (`show_products` grounding check).
 
 ## Auth model
 

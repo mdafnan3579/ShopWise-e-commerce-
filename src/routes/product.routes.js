@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import * as ai from '../controllers/ai.controller.js';
 import * as products from '../controllers/product.controller.js';
 import * as reviews from '../controllers/review.controller.js';
 import { optionalAuth, requireAuth, requireRole } from '../middleware/auth.js';
@@ -14,6 +15,7 @@ import {
   updateProductSchema,
 } from '../validators/product.validators.js';
 import { createReviewSchema, listReviewsSchema } from '../validators/review.validators.js';
+import { createReviewSummaryLimiter } from './ai.routes.js';
 
 const adminOnly = [requireAuth, requireRole('admin')];
 
@@ -29,6 +31,13 @@ export function createProductRouter(limits) {
 
   // Reviews
   router.get('/:id/reviews', validate(listReviewsSchema), reviews.listReviews);
+  router.get(
+    '/:id/review-summary',
+    optionalAuth,
+    createReviewSummaryLimiter(limits),
+    validate(productIdSchema),
+    ai.reviewSummary,
+  );
   router.post(
     '/:id/reviews',
     requireAuth,

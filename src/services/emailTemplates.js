@@ -1,15 +1,10 @@
+import { formatMoney } from '../utils/money.js';
+
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 /** User-controlled values (names, addresses) are escaped before going into HTML. */
 export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ESCAPES[char]);
-}
-
-export function formatMoney(cents, currency = 'usd') {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency.toUpperCase(),
-  }).format(cents / 100);
 }
 
 export function renderOrderConfirmation(order, user, clientUrl) {

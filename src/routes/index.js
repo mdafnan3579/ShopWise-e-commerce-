@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { createAdminRouter } from './admin.routes.js';
+import { createAIRouter } from './ai.routes.js';
 import { createAuthRouter } from './auth.routes.js';
 import {
   createCartRouter,
@@ -28,6 +29,7 @@ export function createApiRouter(limits) {
   router.use('/coupons', createCouponRouter());
   router.use('/checkout', createCheckoutRouter(limits));
   router.use('/orders', createOrderRouter());
+  router.use('/ai', createAIRouter(limits));
   router.use('/admin', createAdminRouter());
 
   return router;

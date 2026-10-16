@@ -17,6 +17,8 @@ export default defineConfig({
       // Fake credentials: Stripe API calls are mocked; webhook signatures are generated locally.
       STRIPE_SECRET_KEY: 'sk_test_fake_key_for_tests',
       STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
+      // The Anthropic SDK is mocked in tests (tests/helpers/fakeAnthropic.js); no real calls.
+      ANTHROPIC_API_KEY: 'sk-ant-test-key',
     },
     testTimeout: 15_000,
     hookTimeout: 120_000, // first run downloads the mongod binary

@@ -11,10 +11,12 @@ import { connectDB, disconnectDB } from '../config/db.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { Cart } from '../models/Cart.js';
+import { ChatSession } from '../models/ChatSession.js';
 import { Coupon } from '../models/Coupon.js';
 import { Order } from '../models/Order.js';
 import { ProcessedWebhookEvent } from '../models/ProcessedWebhookEvent.js';
 import { Product } from '../models/Product.js';
+import { RecommendationCache } from '../models/RecommendationCache.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { Review } from '../models/Review.js';
 import { User } from '../models/User.js';
@@ -59,6 +61,8 @@ export const SEEDED_MODELS = [
   Coupon,
   Cart,
   ProcessedWebhookEvent,
+  ChatSession,
+  RecommendationCache,
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;

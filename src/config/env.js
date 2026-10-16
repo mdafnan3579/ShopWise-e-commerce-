@@ -58,6 +58,20 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().default('ShopWise <no-reply@shopwise.dev>'),
+
+  // --- AI (Anthropic). Server-side only; without a key every AI feature uses its fallback. ---
+  ANTHROPIC_API_KEY: z.string().startsWith('sk-ant-').optional(),
+  ANTHROPIC_MODEL: z.string().default('claude-sonnet-5-5'),
+  ANTHROPIC_FAST_MODEL: z.string().default('claude-haiku-5-5'),
+  AI_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
+  // Server-side refusal fallback (Anthropic beta) for main-model requests.
+  AI_REFUSAL_FALLBACK: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((value) => value === 'true'),
 });
 
 /**
