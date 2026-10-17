@@ -2,11 +2,14 @@ import axios from 'axios';
 
 export const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000').replace(/\/$/, '');
 
-/** Auth is cookie-based, so every request sends credentials (API.md §2). */
+/**
+ * Auth is cookie-based, so every request sends credentials (API.md §2).
+ * No default Content-Type: axios sets JSON for object bodies, and a JSON header on a bodyless
+ * POST (e.g. `/auth/refresh`) makes the API reject it as malformed JSON.
+ */
 export const http = axios.create({
   baseURL: `${API_URL}/api/v1`,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
 });
 
 const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
@@ -26,7 +29,7 @@ export function configureAuthHooks(hooks) {
  */
 export function refreshSession() {
   refreshPromise ??= http
-    .post('/auth/refresh', null, { _skipRefresh: true })
+    .post('/auth/refresh', undefined, { _skipRefresh: true })
     .then((res) => res.data.data.user)
     .finally(() => {
       refreshPromise = null;

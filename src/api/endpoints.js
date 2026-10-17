@@ -83,9 +83,12 @@ export const adminApi = {
   uploadImages: (id, files) => {
     const form = new FormData();
     for (const file of files) form.append('images', file);
-    return http
-      .post(`/products/${id}/images`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
-      .then(unwrap);
+    return (
+      http
+        // axios + the browser set multipart/form-data with the right boundary for FormData.
+        .post(`/products/${id}/images`, form)
+        .then(unwrap)
+    );
   },
   deleteImage: (id, imageId) => http.delete(`/products/${id}/images/${imageId}`).then(unwrap),
   orders: (params) => http.get('/admin/orders', { params: clean(params) }).then(unwrapList),
