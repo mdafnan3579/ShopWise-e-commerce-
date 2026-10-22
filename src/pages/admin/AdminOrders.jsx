@@ -1,11 +1,39 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, Truck } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 import { adminApi } from '../../api/endpoints.js';
 import { ErrorState, PageLoader, Pagination, StatusBadge } from '../../components/ui.jsx';
+import { errorMessage } from '../../lib/api.js';
 import { formatDateTime, formatPrice } from '../../lib/format.js';
 import { AdminHeader } from './AdminLayout.jsx';
+
+/** One-click paid → shipped from the list; other transitions live on the order detail page. */
+function MarkShippedButton({ order }) {
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => adminApi.setOrderStatus(order._id, { status: 'shipped' }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['admin-order', order._id], updated);
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+      toast.success(`${updated.orderNumber} marked as shipped`);
+    },
+    onError: (err) => toast.error(errorMessage(err)),
+  });
+
+  return (
+    <button
+      className="btn-secondary px-2.5 py-1 text-xs whitespace-nowrap"
+      disabled={mutation.isPending}
+      onClick={() => mutation.mutate()}
+    >
+      <Truck className="size-3.5" />
+      {mutation.isPending ? 'Saving…' : 'Mark shipped'}
+    </button>
+  );
+}
 
 export function AdminOrders() {
   const [filters, setFilters] = useState({
@@ -94,6 +122,9 @@ export function AdminOrders() {
                 <th className="px-4 py-3 text-right font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Payment</th>
+                <th className="px-4 py-3 font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -126,11 +157,14 @@ export function AdminOrders() {
                   <td className="px-4 py-2">
                     <StatusBadge status={o.paymentStatus} />
                   </td>
+                  <td className="px-4 py-2 text-right">
+                    {o.orderStatus === 'paid' && <MarkShippedButton order={o} />}
+                  </td>
                 </tr>
               ))}
               {orders.data.items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                     No orders found.
                   </td>
                 </tr>
