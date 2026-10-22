@@ -1,7 +1,7 @@
 # ShopWise Web
 
 React storefront and admin panel for **ShopWise**, an AI-powered e-commerce platform. It talks to
-the [ShopWise API](https://github.com/mdafnan3579/ShopWise-e-commerce-) over HTTP and is built
+the [ShopWise API](../shopwise-api) over HTTP and is built
 strictly against its contract, [API.md](./API.md).
 
 ## Features
