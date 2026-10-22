@@ -20,7 +20,7 @@ import { RecommendationCache } from '../models/RecommendationCache.js';
 import { RefreshToken } from '../models/RefreshToken.js';
 import { Review } from '../models/Review.js';
 import { User } from '../models/User.js';
-import { SEED_PRODUCTS, placeholderImage } from './seed-data/products.js';
+import { SEED_PRODUCTS, productImage } from './seed-data/products.js';
 import { REVIEWER_NAMES, REVIEW_TEMPLATES } from './seed-data/reviews.js';
 import { calculateShipping, calculateTax } from '../services/pricing.service.js';
 import { slugify } from '../utils/slugify.js';
@@ -133,7 +133,7 @@ export async function seedDatabase() {
     SEED_PRODUCTS.map(({ quality: _quality, ...product }) => ({
       ...product,
       slug: slugify(product.name),
-      images: [placeholderImage(product)],
+      images: [productImage(product)],
     })),
   );
 

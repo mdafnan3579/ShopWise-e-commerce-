@@ -1,3 +1,5 @@
+import { PRODUCT_IMAGES } from './productImages.js';
+
 /**
  * Seed catalog: 48 products across 8 categories. `quality` (1–5) biases the generated review
  * ratings so the catalog has a realistic spread of good and mediocre products.
@@ -613,4 +615,10 @@ export function placeholderImage(product) {
   const [bg, fg] = CATEGORY_COLORS[product.category];
   const text = encodeURIComponent(product.name).replace(/%20/g, '+');
   return { url: `https://placehold.co/800x800/${bg}/${fg}/png?text=${text}`, alt: product.name };
+}
+
+/** The product's Unsplash photo, or a placeholder for products without one. */
+export function productImage(product) {
+  const photo = PRODUCT_IMAGES[product.name];
+  return photo ? { url: photo.url, alt: product.name } : placeholderImage(product);
 }
