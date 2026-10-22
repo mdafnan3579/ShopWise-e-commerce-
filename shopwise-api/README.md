@@ -5,17 +5,17 @@ real payments (Stripe), a streaming AI shopping assistant that calls tools again
 catalog, natural-language search, AI review summaries and personalized recommendations, all
 built so the shop keeps working when the AI doesn't.
 
-[![CI](https://github.com/<your-username>/shopwise-api/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-username>/shopwise-api/actions/workflows/ci.yml)
+[![CI](https://github.com/mdafnan3579/ShopWise-e-commerce-/actions/workflows/ci.yml/badge.svg)](https://github.com/mdafnan3579/ShopWise-e-commerce-/actions/workflows/ci.yml)
 ![Node 24](https://img.shields.io/badge/node-24-339933)
 ![Tests](https://img.shields.io/badge/tests-166%20passing-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
 
-|                      |                                                                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **Live API**         | `https://<your-service>.onrender.com` _(placeholder)_                                                                      |
-| **Interactive docs** | `https://<your-service>.onrender.com/api/docs` _(placeholder)_                                                             |
-| **Frontend**         | [shopwise-web](https://github.com/<your-username>/shopwise-web) · live at `https://<your-app>.vercel.app` _(placeholders)_ |
-| **API contract**     | [API.md](./API.md)                                                                                                         |
+|                      |                                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Live API**         | `https://<your-service>.onrender.com` _(placeholder)_                                                                                                 |
+| **Interactive docs** | `https://<your-service>.onrender.com/api/docs` _(placeholder)_                                                                                        |
+| **Frontend**         | [shopwise-web](https://github.com/mdafnan3579/ShopWise-e-commerce-/tree/main/shopwise-web) · live at `https://<your-app>.vercel.app` _(placeholders)_ |
+| **API contract**     | [API.md](./API.md)                                                                                                                                    |
 
 **Demo accounts** (created by `npm run seed`):
 
@@ -175,8 +175,8 @@ sequenceDiagram
 provides one, or use a free MongoDB Atlas cluster).
 
 ```bash
-git clone https://github.com/<your-username>/shopwise-api.git
-cd shopwise-api
+git clone https://github.com/mdafnan3579/ShopWise-e-commerce-.git shopwise
+cd shopwise/shopwise-api
 npm install
 cp .env.example .env          # then fill in the values (see below)
 

@@ -1,0 +1,13 @@
+node_modules/
+coverage/
+logs/
+*.log
+
+# Environment — never commit real secrets
+.env
+.env.*
+!.env.example
+
+.DS_Store
+Thumbs.db
+.idea/

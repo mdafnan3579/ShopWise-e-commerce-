@@ -5,6 +5,10 @@ services:
   - type: web
     name: shopwise-api
     runtime: docker
+    # Monorepo: the API lives in shopwise-api/; only changes there trigger a deploy.
+    rootDir: shopwise-api
+    dockerfilePath: ./shopwise-api/Dockerfile
+    dockerContext: ./shopwise-api
     plan: free
     healthCheckPath: /health
     autoDeploy: true

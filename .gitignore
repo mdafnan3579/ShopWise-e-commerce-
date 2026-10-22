@@ -1,13 +1,13 @@
+# Each app has its own .gitignore; these cover the repo root.
 node_modules/
-coverage/
-logs/
-*.log
-
-# Environment — never commit real secrets
 .env
 .env.*
 !.env.example
 
+# Portable local MongoDB binary and data (see shopwise-api/README.md)
+local-mongo/
+
 .DS_Store
 Thumbs.db
 .idea/
+.vscode/

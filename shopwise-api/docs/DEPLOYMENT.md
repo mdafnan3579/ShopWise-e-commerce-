@@ -24,7 +24,7 @@ MongoDB is hosted on MongoDB Atlas (free tier works).
 ## 3. Create the Render service
 
 1. Push the repository to GitHub.
-2. In Render: **New → Blueprint**, pick the repository. Render reads `render.yaml`.
+2. In Render: **New → Blueprint**, pick the repository. Render reads `render.yaml` from the repo root, which builds the Docker image from `shopwise-api/`.
 3. Fill in the secret values it asks for:
    - `CLIENT_URL`: your frontend origin(s), comma-separated, e.g. `https://shopwise.vercel.app`
    - `MONGODB_URI`: the Atlas string from step 1
