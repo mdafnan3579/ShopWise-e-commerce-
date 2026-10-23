@@ -1,0 +1,17 @@
+{
+  "name": "support-agent-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Learn to build a customer support AI agent step by step",
+  "type": "module",
+  "scripts": {
+    "step2": "node --use-system-ca step2-hello.js",
+    "step3": "node --use-system-ca step3-chat.js",
+    "step4": "node --use-system-ca step4-tools.js",
+    "step5": "node --use-system-ca step5-support-agent.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.1.0",
+    "dotenv": "^16.6.1"
+  }
+}
