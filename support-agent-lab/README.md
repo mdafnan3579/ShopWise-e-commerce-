@@ -1,6 +1,6 @@
 # Support Agent Lab
 
-A beginner, step-by-step practice project for building a customer support AI agent with Claude.
+A beginner, step-by-step practice project for building a customer support AI agent with Google Gemini.
 Each file adds **one new idea**. Read it top to bottom, run it, then try the experiments at the bottom.
 
 | File | New idea |
@@ -12,7 +12,7 @@ Each file adds **one new idea**. Read it top to bottom, run it, then try the exp
 
 ## Setup (once)
 
-1. Get an API key at <https://console.anthropic.com> → **API Keys** (add a few dollars of credit).
+1. Get a free API key at <https://aistudio.google.com/api-keys>.
 2. In this folder:
 
    ```powershell
@@ -29,19 +29,19 @@ Each file adds **one new idea**. Read it top to bottom, run it, then try the exp
 ## The one picture to remember
 
 ```
-you ──message + tool list──▶ Claude
- ▲                            │ stop_reason = "tool_use"  ("please run get_order_status")
+you ──message + function list──▶ Gemini
+ ▲                            │ response.functionCalls  ("please run get_order_status")
  │                            ▼
- └──tool_result◀── your code runs the function
-        (loop until stop_reason = "end_turn" → final answer)
+ └──functionResponse◀── your code runs the function
+        (loop until there are no functionCalls → response.text is the answer)
 ```
 
 ## Next steps (after step 5)
 
 - **Step 6:** move the tools into `shopwise-api`, calling real MongoDB orders. The customer ID comes from the login cookie (`req.user`).
 - **Step 7:** add an Express route and connect the website chat widget.
-- **Step 8:** write tests with a fake Claude client (`shopwise-api/tests/helpers/fakeAnthropic.js`) and try to break the agent.
+- **Step 8:** write tests with a fake AI client (like `shopwise-api/tests/helpers/fakeAnthropic.js`) and try to break the agent.
 
 ## Cost
 
-Steps 2–5 cost well under $1 in total. Set `MODEL=claude-haiku-5-5` in `.env` to make experiments much cheaper.
+`gemini-3.8-flash` has a free tier (rate-limited), which is plenty for this lab. If you hit "429 Too Many Requests", wait a minute and try again.
