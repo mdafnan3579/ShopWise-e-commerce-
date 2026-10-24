@@ -71,3 +71,33 @@ open https://<your-service>.onrender.com/api/docs
 ```
 
 Free Render instances sleep after inactivity; the first request after a while takes ~30–60 s.
+
+## 7. Frontend on Vercel
+
+The React app in `shopwise-web/` is a static Vite build. `shopwise-web/vercel.json` sets the build
+and sends every path to `index.html`, so deep links like `/account/orders` work on reload.
+
+1. In Vercel: **Add New → Project**, import the repository and set **Root Directory** to
+   `shopwise-web`. The Vite preset is detected.
+2. Add the environment variable `VITE_API_URL` = `https://<your-service>.onrender.com` (no
+   trailing slash). It is baked in at build time, so redeploy after changing it.
+3. Deploy, then put the Vercel URL (e.g. `https://shopwise.vercel.app`) in `CLIENT_URL` on Render
+   and redeploy the API. CORS and the CSRF origin check only accept origins listed there.
+
+**Cookies across domains:** `*.vercel.app` and `*.onrender.com` are different sites, so the auth
+cookies are third-party cookies. Chrome and Firefox send them (`SameSite=None; Secure`), but
+Safari blocks them by default, so login will not stick in Safari. For a production store, give
+both apps subdomains of one domain you own (e.g. `shop.example.com` and `api.example.com`).
+
+## 8. Check the AI assistant and support tickets
+
+With `ANTHROPIC_API_KEY` set (and credit on the Anthropic account):
+
+1. Log in as a customer, open **Ask ShopWise AI** and try "Where is my latest order?",
+   "What's your return policy?" and "My headphones arrived broken".
+2. For a pending, unpaid order, "Cancel my order" shows a confirm button. The order changes only
+   when the customer clicks it.
+3. Log in as an admin and open **Admin → Support** to see and resolve the tickets.
+
+Without a key (or with `AI_ENABLED=false`) the chat shows top-rated products instead, and the
+rest of the shop works normally.

@@ -17,7 +17,7 @@ import {
   toAIUnavailable,
 } from '../client.js';
 import { chatSystemPrompt } from '../prompts/chat.js';
-import { CHAT_TOOLS, runTool } from '../tools/catalogTools.js';
+import { CHAT_TOOLS, runTool } from '../tools/index.js';
 
 const FEATURE = 'chat';
 const STORE_NAME = 'ShopWise';
@@ -124,10 +124,14 @@ async function persistTurn(session, userMessage, assistantText, productIds) {
  * the results back → repeat until it answers (max MAX_TOOL_ROUNDS). Text deltas are forwarded
  * as they arrive. Never throws: failures become an `error` event plus a non-AI fallback reply.
  *
- * Events: text {delta} · tool {name, status} · products {products} · error {code, message} · done {usage}
+ * Events: text {delta} · tool {name, status} · products {products} · action {type, ...} ·
+ * error {code, message} · done {usage}
+ *
+ * `action` events ask the UI for a button the customer must click (e.g. confirm a
+ * cancellation); the assistant itself never changes an order.
  */
 export async function runChatTurn({ session, message, userId, signal, send, log = logger }) {
-  const context = { seenProductIds: new Set(), displayedProductIds: [], log };
+  const context = { userId, seenProductIds: new Set(), displayedProductIds: [], actions: [], log };
   const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 };
   let assistantText = '';
 
@@ -217,6 +221,7 @@ export async function runChatTurn({ session, message, userId, signal, send, log 
 
     const products = await loadProductCards(context.displayedProductIds);
     if (products.length) send('products', { products });
+    context.actions.forEach((action) => send('action', action));
 
     await persistTurn(
       session,

@@ -382,6 +382,37 @@ const definition = {
           isActive: { type: 'boolean' },
         },
       },
+      SupportTicket: {
+        type: 'object',
+        properties: {
+          _id: objectId,
+          ticketNumber: { type: 'string', example: 'SUP-3F9A1C7B' },
+          user: {
+            type: 'object',
+            properties: { _id: objectId, name: { type: 'string' }, email: { type: 'string' } },
+          },
+          order: objectId,
+          orderNumber: { type: 'string', example: 'SW-MG7K2P-9F3A1C' },
+          category: {
+            type: 'string',
+            enum: [
+              'refund',
+              'return',
+              'damaged_or_wrong_item',
+              'delivery_problem',
+              'cancel_paid_order',
+              'account',
+              'other',
+            ],
+          },
+          priority: { type: 'string', enum: ['low', 'normal', 'high'] },
+          summary: { type: 'string' },
+          status: { type: 'string', enum: ['open', 'resolved'] },
+          resolvedAt: { type: 'string', format: 'date-time' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' },
+        },
+      },
       CouponInput: {
         type: 'object',
         required: ['code', 'discountType', 'value'],

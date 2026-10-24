@@ -7,6 +7,7 @@ import { AdminOrderDetail } from './AdminOrderDetail.jsx';
 import { AdminOrders } from './AdminOrders.jsx';
 import { AdminProductForm } from './AdminProductForm.jsx';
 import { AdminProducts } from './AdminProducts.jsx';
+import { AdminSupportTickets } from './AdminSupportTickets.jsx';
 import { AdminUsers } from './AdminUsers.jsx';
 
 /** Loaded lazily from App so shoppers never download the admin bundle (charts included). */
@@ -22,6 +23,7 @@ export default function AdminRoutes() {
         <Route path="orders/:id" element={<AdminOrderDetail />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="coupons" element={<AdminCoupons />} />
+        <Route path="support" element={<AdminSupportTickets />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

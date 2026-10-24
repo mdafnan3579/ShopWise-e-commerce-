@@ -1,18 +1,17 @@
-// STEP 3 — A chat with a job description (system instruction) and a memory (history).
+// STEP 3 — A chat with a job description (system prompt) and a memory (history).
 // Run: npm run step3      (type "exit" to quit)
 //
 // What you learn:
-//  1. The SYSTEM INSTRUCTION tells Gemini who it is and what rules to follow.
-//  2. Gemini does NOT remember previous calls. You keep the conversation in an
+//  1. The SYSTEM prompt tells Claude who it is and what rules to follow.
+//  2. Claude does NOT remember previous calls. You keep the conversation in an
 //     array and send the whole thing every time.
-//     Each entry looks like { role: 'user' | 'model', parts: [{ text: '...' }] }.
 
 import 'dotenv/config';
-import { GoogleGenAI } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
 import readline from 'node:readline/promises';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.MODEL ?? 'gemini-3.8-flash';
+const client = new Anthropic();
+const MODEL = process.env.MODEL ?? 'claude-opus-5-5';
 
 const SYSTEM = `You are the customer support agent for ShopWise, an online store.
 Be friendly and brief (2-4 sentences).
@@ -23,7 +22,7 @@ Store policies:
 
 If you don't know something, say so honestly. Never invent order details.`;
 
-const history = []; // ← the conversation history ("memory")
+const messages = []; // ← the conversation history ("memory")
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 console.log('ShopWise support (type "exit" to quit)\n');
@@ -33,22 +32,24 @@ while (true) {
   if (input.trim() === 'exit') break;
 
   // 1. Add the customer's message to the history
-  history.push({ role: 'user', parts: [{ text: input }] });
+  messages.push({ role: 'user', content: input });
 
-  // 2. Send the WHOLE history to Gemini
-  const response = await ai.models.generateContent({
+  // 2. Send the WHOLE history to Claude
+  const response = await client.messages.create({
     model: MODEL,
-    contents: history,
-    config: { systemInstruction: SYSTEM },
+    max_tokens: 16000,
+    output_config: { effort: 'low' },
+    system: SYSTEM,
+    messages,
   });
 
-  // 3. Add Gemini's reply to the history (role "model"), so the next turn remembers it
-  history.push(response.candidates[0].content);
+  // 3. Add Claude's reply to the history, so the next turn remembers it
+  messages.push({ role: 'assistant', content: response.content });
 
-  console.log('Agent:', response.text, '\n');
+  console.log('Agent:', response.content.find((b) => b.type === 'text')?.text, '\n');
 }
 
 rl.close();
 
-// EXPERIMENT: comment out step 3 (the model push) and ask a follow-up
+// EXPERIMENT: comment out step 3 (the assistant push) and ask a follow-up
 // question like "and how long does that take?" — notice it loses context.

@@ -3,7 +3,7 @@
 [![CI](https://github.com/mdafnan3579/ShopWise-e-commerce-/actions/workflows/ci.yml/badge.svg)](https://github.com/mdafnan3579/ShopWise-e-commerce-/actions/workflows/ci.yml)
 
 An AI-powered e-commerce platform: a Node.js/Express API and a React storefront with an admin panel,
-Stripe checkout and Claude-powered shopping features.
+Stripe checkout and a Claude-powered shopping and customer support assistant.
 
 | Folder                             | What it is                                                                                                                                                             |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,3 +34,11 @@ npm run dev
 
 Open <http://localhost:5173> (use `localhost`, not `127.0.0.1`, so the auth cookies work).
 Demo logins: `demo@shopwise.dev` / `Demo@12345` (customer) and `admin@shopwise.dev` / `Admin@12345` (admin).
+
+## Deploy
+
+API on Render (Docker, `render.yaml`) with MongoDB Atlas, web app on Vercel (`shopwise-web/vercel.json`).
+Step by step, including the Stripe webhook and cookie notes: [shopwise-api/docs/DEPLOYMENT.md](./shopwise-api/docs/DEPLOYMENT.md).
+
+`support-agent/` is a separate, terminal-only tutorial that builds the support agent step by step.
+It is not deployed; the same ideas run in production inside the website's chat assistant.

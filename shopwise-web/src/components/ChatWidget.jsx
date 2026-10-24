@@ -1,9 +1,11 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { MessageCircle, RotateCcw, Send, Sparkles, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Markdown from 'react-markdown';
 import { Link } from 'react-router';
-import { aiApi } from '../api/endpoints.js';
-import { primaryImage } from '../lib/format.js';
+import { aiApi, orderApi } from '../api/endpoints.js';
+import { errorMessage } from '../lib/api.js';
+import { formatPrice, primaryImage } from '../lib/format.js';
 import { streamChat } from '../lib/chat.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { Price, Spinner } from './ui.jsx';
@@ -15,11 +17,16 @@ const TOOL_LABELS = {
   compare_products: 'Comparing products…',
   check_stock: 'Checking stock…',
   show_products: 'Picking products…',
+  get_store_policy: 'Checking store policy…',
+  list_my_orders: 'Looking up your orders…',
+  get_order_details: 'Reading your order…',
+  request_order_cancellation: 'Checking the order…',
+  create_support_ticket: 'Contacting the support team…',
 };
 const SUGGESTIONS = [
   'Gift ideas for a runner under $100',
-  'Compare your best wireless headphones',
-  'What’s good for a home coffee setup?',
+  'Where is my latest order?',
+  'What’s your return policy?',
 ];
 
 const storage = {
@@ -62,6 +69,55 @@ function ChatProducts({ products }) {
   );
 }
 
+/**
+ * The assistant can only *offer* a cancellation. Nothing changes until the customer clicks,
+ * and the click calls the normal cancel endpoint (API.md §5 `action` event).
+ */
+function CancelOrderAction({ action }) {
+  const queryClient = useQueryClient();
+  const [state, setState] = useState('offered'); // offered → done | kept
+  const cancel = useMutation({
+    mutationFn: () => orderApi.cancel(action.orderId),
+    onSuccess: () => {
+      setState('done');
+      queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['my-order', action.orderId] });
+    },
+  });
+
+  if (state === 'done') {
+    return <p className="mt-2 text-xs text-emerald-700">Order {action.orderNumber} cancelled.</p>;
+  }
+  if (state === 'kept') {
+    return <p className="mt-2 text-xs text-slate-500">Order {action.orderNumber} was kept.</p>;
+  }
+  return (
+    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+      <p>
+        Cancel order <span className="font-medium">{action.orderNumber}</span> (
+        {formatPrice(action.totalCents)})?
+      </p>
+      {cancel.isError && <p className="mt-1 text-xs text-red-700">{errorMessage(cancel.error)}</p>}
+      <div className="mt-2 flex gap-2">
+        <button
+          className="btn-primary px-3 py-1.5 text-xs"
+          disabled={cancel.isPending}
+          onClick={() => cancel.mutate()}
+        >
+          {cancel.isPending ? 'Cancelling…' : 'Yes, cancel it'}
+        </button>
+        <button
+          className="btn-secondary px-3 py-1.5 text-xs"
+          disabled={cancel.isPending}
+          onClick={() => setState('kept')}
+        >
+          Keep order
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function Message({ message }) {
   if (message.role === 'user') {
     return (
@@ -90,6 +146,11 @@ function Message({ message }) {
       </div>
       {message.notice && <p className="mt-1 text-xs text-amber-700">{message.notice}</p>}
       {message.products?.length > 0 && <ChatProducts products={message.products} />}
+      {message.actions?.map((action) =>
+        action.type === 'cancel_order' ? (
+          <CancelOrderAction key={action.orderId} action={action} />
+        ) : null,
+      )}
     </div>
   );
 }
@@ -185,6 +246,7 @@ export function ChatWidget() {
           if (event === 'text')
             updateLast((m) => ({ content: m.content + data.delta, tool: null }));
           if (event === 'products') updateLast({ products: data.products });
+          if (event === 'action') updateLast((m) => ({ actions: [...(m.actions ?? []), data] }));
           if (event === 'error') {
             updateLast((m) => ({
               notice: 'The AI assistant is limited right now, so here are some popular picks.',
@@ -237,7 +299,7 @@ export function ChatWidget() {
   return (
     <section
       className="fixed inset-x-2 bottom-2 z-40 flex h-[min(620px,calc(100vh-1rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96"
-      aria-label="Shopping assistant"
+      aria-label="Shopping and support assistant"
     >
       <header className="flex items-center gap-2 border-b border-slate-200 bg-brand-600 px-4 py-3 text-white">
         <Sparkles className="size-5" />
@@ -264,7 +326,8 @@ export function ChatWidget() {
         {!loadingHistory && messages.length === 0 && (
           <div className="text-sm text-slate-600">
             <p>
-              Hi! Tell me what you’re shopping for and I’ll find, compare and check stock for you.
+              Hi! I can find and compare products for you, and help with your orders, shipping,
+              returns and refunds.
             </p>
             <div className="mt-3 flex flex-col gap-2">
               {SUGGESTIONS.map((s) => (
@@ -293,7 +356,7 @@ export function ChatWidget() {
       >
         <input
           className="input"
-          placeholder="Ask about products…"
+          placeholder="Ask about products or your orders…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           maxLength={1000}

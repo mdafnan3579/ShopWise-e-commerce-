@@ -3,6 +3,7 @@ import * as analytics from '../controllers/analytics.controller.js';
 import * as commerce from '../controllers/commerce.controller.js';
 import * as orders from '../controllers/order.controller.js';
 import * as products from '../controllers/product.controller.js';
+import * as support from '../controllers/supportTicket.controller.js';
 import * as users from '../controllers/user.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -17,6 +18,7 @@ import {
 } from '../validators/commerce.validators.js';
 import { statsSchema } from '../validators/analytics.validators.js';
 import { adminListProductsSchema } from '../validators/product.validators.js';
+import { listTicketsSchema, updateTicketStatusSchema } from '../validators/support.validators.js';
 import { listUsersSchema, updateRoleSchema } from '../validators/user.validators.js';
 
 /** Every route in this router is admin-only, enforced once at the router level. */
@@ -39,6 +41,13 @@ export function createAdminRouter() {
   router.post('/coupons', validate(createCouponSchema), commerce.createCoupon);
   router.patch('/coupons/:id', validate(updateCouponSchema), commerce.updateCoupon);
   router.delete('/coupons/:id', validate(couponIdSchema), commerce.deleteCoupon);
+
+  router.get('/support-tickets', validate(listTicketsSchema), support.listTickets);
+  router.patch(
+    '/support-tickets/:id/status',
+    validate(updateTicketStatusSchema),
+    support.updateTicketStatus,
+  );
 
   return router;
 }

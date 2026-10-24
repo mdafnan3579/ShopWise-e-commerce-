@@ -98,4 +98,8 @@ export const adminApi = {
   createCoupon: (body) => http.post('/admin/coupons', body).then(unwrap),
   updateCoupon: (id, body) => http.patch(`/admin/coupons/${id}`, body).then(unwrap),
   deleteCoupon: (id) => http.delete(`/admin/coupons/${id}`).then(unwrap),
+  supportTickets: (params) =>
+    http.get('/admin/support-tickets', { params: clean(params) }).then(unwrapList),
+  setTicketStatus: (id, status) =>
+    http.patch(`/admin/support-tickets/${id}/status`, { status }).then(unwrap),
 };

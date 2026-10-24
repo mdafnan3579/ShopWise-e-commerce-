@@ -1,0 +1,22 @@
+{
+  "name": "support-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A customer support AI agent for ShopWise, built step by step with Claude",
+  "type": "module",
+  "scripts": {
+    "step1": "node --use-system-ca step1-hello.js",
+    "step2": "node --use-system-ca step2-chat.js",
+    "step3": "node --use-system-ca step3-persona.js",
+    "step4": "node --use-system-ca step4-first-tool.js",
+    "step5": "node --use-system-ca step5-agent-loop.js",
+    "step6": "node --use-system-ca step6-orders.js",
+    "step7": "node --use-system-ca step7-support-agent.js",
+    "start": "node --use-system-ca step7-support-agent.js",
+    "test": "node --use-system-ca --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
+    "dotenv": "^18.0.8"
+  }
+}

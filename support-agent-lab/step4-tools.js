@@ -1,19 +1,18 @@
-// STEP 4 — Your first TOOL (Gemini calls it "function calling").
-// This is what turns a chatbot into an AGENT.
+// STEP 4 — Your first TOOL. This is what turns a chatbot into an AGENT.
 // Run: npm run step4      (try: "Where is my order SW-1001?")
 //
 // What you learn:
-//  1. You DESCRIBE a function to Gemini (name + description + parameters).
-//  2. Gemini can't run code. It ASKS you to run the function (response.functionCalls).
+//  1. You DESCRIBE a tool to Claude (name + description + input schema).
+//  2. Claude can't run code. It ASKS you to run the tool (stop_reason = "tool_use").
 //  3. YOUR code runs the function and sends the result back.
-//  4. Repeat until Gemini gives a final text answer. That repeat is "the agent loop".
+//  4. Repeat until Claude gives a final answer. That repeat is "the agent loop".
 
 import 'dotenv/config';
-import { GoogleGenAI, Type } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
 import readline from 'node:readline/promises';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.MODEL ?? 'gemini-3.8-flash';
+const client = new Anthropic();
+const MODEL = process.env.MODEL ?? 'claude-opus-5-5';
 
 // ---------------------------------------------------------------------------
 // Fake database. In the real ShopWise app this would be MongoDB.
@@ -25,19 +24,19 @@ const ORDERS = {
 };
 
 // ---------------------------------------------------------------------------
-// 1. DESCRIBE the function. Gemini reads the description to decide WHEN to use it,
-//    and the parameters schema to know WHAT to send.
+// 1. DESCRIBE the tool. Claude reads the description to decide WHEN to use it,
+//    and the input_schema (JSON Schema) to know WHAT to send.
 // ---------------------------------------------------------------------------
-const functionDeclarations = [
+const tools = [
   {
     name: 'get_order_status',
     description:
       'Look up the status, items and tracking number of a ShopWise order. ' +
       'Use this whenever the customer asks about an order, delivery or tracking.',
-    parameters: {
-      type: Type.OBJECT,
+    input_schema: {
+      type: 'object',
       properties: {
-        orderNumber: { type: Type.STRING, description: 'The order number, e.g. SW-1001' },
+        orderNumber: { type: 'string', description: 'The order number, e.g. SW-1001' },
       },
       required: ['orderNumber'],
     },
@@ -45,15 +44,15 @@ const functionDeclarations = [
 ];
 
 // ---------------------------------------------------------------------------
-// 2. The REAL code that runs when Gemini asks for a function.
-//    Return a plain object. Gemini reads it like a document.
+// 2. The REAL code that runs when Claude asks for a tool.
+//    Always return a string (JSON is fine). Claude reads it like a document.
 // ---------------------------------------------------------------------------
-function runTool(name, args) {
+function runTool(name, input) {
   if (name === 'get_order_status') {
-    const order = ORDERS[String(args.orderNumber).toUpperCase()];
-    return order ?? { error: `No order found with number ${args.orderNumber}.` };
+    const order = ORDERS[input.orderNumber.toUpperCase()];
+    return order ? JSON.stringify(order) : `No order found with number ${input.orderNumber}.`;
   }
-  return { error: `Unknown tool: ${name}` };
+  return `Unknown tool: ${name}`;
 }
 
 const SYSTEM = `You are the customer support agent for ShopWise, an online store.
@@ -61,55 +60,58 @@ Be friendly and brief. Use your tools to look up real data; never guess order de
 If the customer hasn't given an order number, ask for it.`;
 
 // ---------------------------------------------------------------------------
-// 3. THE AGENT LOOP — keeps going until Gemini stops asking for functions.
+// 3. THE AGENT LOOP — keeps going until Claude stops asking for tools.
 // ---------------------------------------------------------------------------
-async function agentTurn(history) {
+async function agentTurn(messages) {
   while (true) {
-    const response = await ai.models.generateContent({
+    const response = await client.messages.create({
       model: MODEL,
-      contents: history,
-      config: {
-        systemInstruction: SYSTEM,
-        tools: [{ functionDeclarations }], // ← tell Gemini which functions exist
-      },
+      max_tokens: 16000,
+      output_config: { effort: 'low' },
+      system: SYSTEM,
+      tools, // ← tell Claude which tools exist
+      messages,
     });
 
-    // Always save Gemini's reply (including its function requests) to the history
-    history.push(response.candidates[0].content);
+    // Always save Claude's reply (including its tool requests) to the history
+    messages.push({ role: 'assistant', content: response.content });
 
-    // No function calls? Then this is the final answer.
-    const calls = response.functionCalls ?? [];
-    if (calls.length === 0) return response.text ?? '(no reply)';
+    // Not asking for a tool? Then this is the final answer.
+    if (response.stop_reason !== 'tool_use') {
+      return response.content.find((b) => b.type === 'text')?.text ?? '(no reply)';
+    }
 
-    // Gemini asked for one or more functions. Run each one…
-    const parts = calls.map((call) => {
-      console.log(`   🔧 Gemini called ${call.name}(${JSON.stringify(call.args)})`);
-      const result = runTool(call.name, call.args);
-      console.log(`   📦 Result: ${JSON.stringify(result)}`);
-      return { functionResponse: { id: call.id, name: call.name, response: { result } } };
-    });
+    // Claude asked for one or more tools. Run each one…
+    const toolResults = [];
+    for (const block of response.content) {
+      if (block.type !== 'tool_use') continue;
+      console.log(`   🔧 Claude called ${block.name}(${JSON.stringify(block.input)})`);
+      const result = runTool(block.name, block.input);
+      console.log(`   📦 Result: ${result}`);
+      toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
+    }
 
-    // …and send ALL results back together in ONE message. Then loop again.
-    history.push({ role: 'user', parts });
+    // …and send ALL results back together in ONE user message. Then loop again.
+    messages.push({ role: 'user', content: toolResults });
   }
 }
 
 // ---------------------------------------------------------------------------
 // Chat in the terminal (same as step 3)
 // ---------------------------------------------------------------------------
-const history = [];
+const messages = [];
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 console.log('ShopWise support agent (type "exit" to quit). Try: "Where is my order SW-1001?"\n');
 
 while (true) {
   const input = await rl.question('You: ');
   if (input.trim() === 'exit') break;
-  history.push({ role: 'user', parts: [{ text: input }] });
-  console.log('Agent:', await agentTurn(history), '\n');
+  messages.push({ role: 'user', content: input });
+  console.log('Agent:', await agentTurn(messages), '\n');
 }
 rl.close();
 
 // EXPERIMENTS:
 //  - Ask "Where's my order?" without a number → it should ask you for one.
-//  - Ask "Compare orders SW-1001 and SW-1002" → watch it call the function TWICE.
+//  - Ask "Compare orders SW-1001 and SW-1002" → watch it call the tool TWICE.
 //  - Ask about SW-9999 → it should say it can't find it, not make something up.

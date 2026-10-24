@@ -11,7 +11,7 @@
     "step5": "node --use-system-ca step5-support-agent.js"
   },
   "dependencies": {
-    "@google/genai": "^2.31.0",
+    "@anthropic-ai/sdk": "^1.2.0",
     "dotenv": "^16.6.1"
   }
 }

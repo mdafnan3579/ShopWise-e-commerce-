@@ -3,9 +3,10 @@
  * /api/v1/ai/chat:
  *   post:
  *     tags: [AI]
- *     summary: Shopping assistant (Server-Sent Events stream)
+ *     summary: Shopping and customer support assistant (Server-Sent Events stream)
  *     description: |
  *       Streams one assistant turn as `text/event-stream`. Works for guests (an httpOnly `sw_guest` cookie scopes their sessions) and logged-in users.
+ *       Signed-in customers also get support: store policies, their own orders, a cancel button for pending unpaid orders, and support tickets for the human team.
  *       Send `sessionId` from a previous `session` event to continue a conversation.
  *
  *       Each event is `event: <name>` + `data: <json>`, separated by a blank line. Lines starting with `:` are keep-alive comments.
@@ -16,6 +17,7 @@
  *       | `text` | `{ delta }` | Markdown text chunks, append in order |
  *       | `tool` | `{ name, status: "running" }` | the assistant is searching / checking stock |
  *       | `products` | `{ products: ProductCard[] }` | cards to render under the reply |
+ *       | `action` | `{ type: "cancel_order", orderId, orderNumber, totalCents }` | show a confirm button; clicking it calls `POST /orders/{id}/cancel` |
  *       | `error` | `{ code: "AI_UNAVAILABLE", message }` | AI failed; a fallback reply and top-rated products follow |
  *       | `done` | `{ sessionId, usage, fallback? }` | always last |
  *

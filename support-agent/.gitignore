@@ -1,0 +1,4 @@
+node_modules/
+.env
+# Tickets the agent creates while you test (step 7)
+tickets.json

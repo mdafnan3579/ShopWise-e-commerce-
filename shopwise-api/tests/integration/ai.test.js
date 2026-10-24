@@ -13,6 +13,7 @@ import {
   toolUseResponse,
 } from '../helpers/fakeAnthropic.js';
 import { createProduct, createTestApp, createUser, loginAs } from '../helpers/index.js';
+import { sse, textOf } from '../helpers/sse.js';
 
 const app = createTestApp();
 const aiError = () => new Error('upstream AI failure');
@@ -21,31 +22,6 @@ afterEach(() => {
   vi.restoreAllMocks();
   expect(fakeAnthropic.pending()).toBe(0); // every scripted response was consumed
 });
-
-/** Collects a Server-Sent Events response into `[{ event, data }]`. */
-function sse(req) {
-  return req.buffer(true).parse((res, callback) => {
-    let raw = '';
-    res.setEncoding('utf8');
-    res.on('data', (chunk) => (raw += chunk));
-    res.on('end', () => {
-      const events = raw
-        .split('\n\n')
-        .filter((block) => block.startsWith('event:'))
-        .map((block) => {
-          const [eventLine, dataLine] = block.split('\n');
-          return { event: eventLine.slice(7), data: JSON.parse(dataLine.slice(6)) };
-        });
-      callback(null, events);
-    });
-  });
-}
-
-const textOf = (events) =>
-  events
-    .filter((e) => e.event === 'text')
-    .map((e) => e.data.delta)
-    .join('');
 
 describe('POST /api/v1/ai/search (natural language search)', () => {
   async function seedShoes() {
@@ -496,6 +472,11 @@ describe('POST /api/v1/ai/chat (SSE shopping assistant)', () => {
       'compare_products',
       'check_stock',
       'show_products',
+      'get_store_policy',
+      'list_my_orders',
+      'get_order_details',
+      'request_order_cancellation',
+      'create_support_ticket',
     ]);
   });
 

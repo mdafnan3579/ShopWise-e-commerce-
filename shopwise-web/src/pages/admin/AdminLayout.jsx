@@ -1,4 +1,12 @@
-import { ArrowLeft, LayoutDashboard, Package, ShoppingBag, Tag, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  LayoutDashboard,
+  LifeBuoy,
+  Package,
+  ShoppingBag,
+  Tag,
+  Users,
+} from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { useAuthStore } from '../../stores/authStore.js';
 
@@ -8,6 +16,7 @@ const LINKS = [
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/coupons', label: 'Coupons', icon: Tag },
+  { to: '/admin/support', label: 'Support', icon: LifeBuoy },
 ];
 
 export function AdminLayout() {

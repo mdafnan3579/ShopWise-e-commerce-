@@ -21,7 +21,7 @@ it is enforced or tested.
 | Filters are built field by field from allow-listed, validated values. Request objects are never passed to Mongo.                                                   | `product.service.js › buildProductFilter`, `order.service.js`, `user.service.js` |
 | User text used in `$regex` is escaped, which prevents both regex injection and ReDoS. Tests send `.*` and expect no results.                                       | `utils/regex.js`                                                                 |
 | Sort fields come from an allow-list enum.                                                                                                                          | `utils/pagination.js`, validators                                                |
-| Model output (AI tool inputs, structured output) is Zod-validated before it reaches a query.                                                                       | `ai/tools/catalogTools.js`, `ai/schemas.js`                                      |
+| Model output (AI tool inputs, structured output) is Zod-validated before it reaches a query.                                                                       | `ai/tools/index.js`, `ai/schemas.js`                                             |
 
 ## Authentication and authorization
 

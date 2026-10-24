@@ -95,10 +95,14 @@ there is **no `asyncHandler` wrapper** — just write `async (req, res) => {}` a
   An unscripted call throws.
 - Layout: `ai/client.js` (only file that touches the SDK: `createMessage`, `createStructured`,
   `streamMessage`, `AIUnavailableError`), `ai/prompts/*` (template functions), `ai/schemas.js`
-  (Zod for model output), `ai/tools/catalogTools.js` (assistant tools → services),
-  `ai/services/*` (one per feature, each with its fallback).
+  (Zod for model output), `ai/tools/` (assistant tools → services: `catalogTools.js` for
+  shopping, `supportTools.js` for policies/orders/tickets, `index.js` with `CHAT_TOOLS` and
+  `runTool`), `ai/services/*` (one per feature, each with its fallback).
 - The chat assistant may only show product ids that a data tool returned in the same turn
   (`show_products` grounding check).
+- Support tools query orders only with the signed-in user's id, and never change an order: a
+  cancellation is an `action` SSE event that the UI turns into a button calling the normal
+  cancel endpoint. Store policies live in `config/support.js`.
 
 ## Auth model
 

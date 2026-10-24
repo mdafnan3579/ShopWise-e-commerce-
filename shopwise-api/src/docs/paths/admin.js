@@ -189,4 +189,39 @@
  *     responses:
  *       200: { description: Deleted }
  *       404: { $ref: '#/components/responses/NotFound' }
+ * /api/v1/admin/support-tickets:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List support tickets opened by the AI assistant
+ *     security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+ *     parameters:
+ *       - { name: status, in: query, schema: { type: string, enum: [open, resolved] } }
+ *       - { name: priority, in: query, schema: { type: string, enum: [low, normal, high] } }
+ *       - { name: category, in: query, schema: { type: string, enum: [refund, return, damaged_or_wrong_item, delivery_problem, cancel_paid_order, account, other] } }
+ *       - { name: q, in: query, description: Ticket number, order number or summary contains, schema: { type: string } }
+ *       - { name: sort, in: query, schema: { type: string, enum: ['-createdAt', createdAt], default: '-createdAt' } }
+ *       - { $ref: '#/components/parameters/Page' }
+ *       - { $ref: '#/components/parameters/Limit' }
+ *     responses:
+ *       200:
+ *         description: Tickets, each with `user { name, email }`
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Paginated'
+ *                 - properties: { data: { type: array, items: { $ref: '#/components/schemas/SupportTicket' } } }
+ *       403: { $ref: '#/components/responses/Forbidden' }
+ * /api/v1/admin/support-tickets/{id}/status:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Mark a support ticket open or resolved
+ *     security: [{ cookieAuth: [] }, { bearerAuth: [] }]
+ *     parameters: [{ $ref: '#/components/parameters/IdPath' }]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object, required: [status], properties: { status: { type: string, enum: [open, resolved] } } } } }
+ *     responses:
+ *       200: { description: 'Updated ticket (`data`)' }
+ *       404: { $ref: '#/components/responses/NotFound' }
  */

@@ -23,7 +23,7 @@ const SORT_MAP = {
 const MAX_RESULTS = 8;
 const DESCRIPTION_PREVIEW = 600;
 
-export const CHAT_TOOLS = [
+export const CATALOG_TOOLS = [
   {
     name: 'search_products',
     description:
@@ -92,7 +92,7 @@ export const CHAT_TOOLS = [
 ];
 
 // Tool inputs are untrusted model output: validated with Zod before any query runs.
-const inputSchemas = {
+export const catalogInputSchemas = {
   search_products: z.object({
     query: z.string().trim().max(100).optional(),
     category: z.enum(CATEGORIES).optional(),
@@ -135,7 +135,7 @@ async function findActive(ids) {
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
-const executors = {
+export const catalogExecutors = {
   async search_products(input, context) {
     const minPriceCents = toCents(input.minPrice);
     let maxPriceCents = toCents(input.maxPrice);
@@ -212,40 +212,3 @@ const executors = {
       : { displayed: grounded };
   },
 };
-
-/**
- * Executes one tool_use block and returns a tool_result block. Never throws: failures are
- * reported to the model as `is_error` results so it can recover or apologize.
- *
- * @param {{ id: string, name: string, input: unknown }} toolUse
- * @param {{ seenProductIds: Set<string>, displayedProductIds: string[] }} context
- */
-export async function runTool(toolUse, context) {
-  const schema = inputSchemas[toolUse.name];
-  const result = (content, isError = false) => ({
-    type: 'tool_result',
-    tool_use_id: toolUse.id,
-    content: JSON.stringify(content),
-    ...(isError && { is_error: true }),
-  });
-
-  if (!schema) return result({ error: `Unknown tool ${toolUse.name}` }, true);
-
-  const parsed = schema.safeParse(toolUse.input);
-  if (!parsed.success) {
-    return result(
-      {
-        error: 'Invalid input',
-        issues: parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`),
-      },
-      true,
-    );
-  }
-
-  try {
-    return result(await executors[toolUse.name](parsed.data, context));
-  } catch (err) {
-    context.log?.warn({ err, tool: toolUse.name }, 'Assistant tool failed');
-    return result({ error: 'The catalog lookup failed, please try again' }, true);
-  }
-}
